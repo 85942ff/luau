@@ -3944,6 +3944,59 @@ FunGroup:AddSlider("JumpDistance", {
     Tooltip = "调节后空翻的跳跃距离",
 })
 
+if not Tabs.yul then
+    Tabs.yul = Window:AddTab('娱乐功能', 'cpu')
+end
+
+local CameraGroup = Tabs.yul:AddLeftGroupbox("视野")
+local RunService = game:GetService("RunService")
+local fovvalue = 70
+local fovenabled = false
+local renderConnection = nil
+
+CameraGroup:AddSlider("FieldOfView", {
+    Text = "视野范围",
+    Default = 70,
+    Min = 60,
+    Max = 120,
+    Rounding = 1,
+    Compact = true,
+    Callback = function(v)
+        pcall(function()
+            fovvalue = v
+            if fovenabled then
+                workspace.CurrentCamera.FieldOfView = v
+            end
+        end)
+    end,
+})
+
+CameraGroup:AddCheckbox("CustomFOV", {
+    Text = "启用自定义视野",
+    Default = false,
+    Callback = function(v)
+        pcall(function()
+            fovenabled = v
+            if v then
+                workspace.CurrentCamera.FieldOfView = fovvalue
+                if not renderConnection then
+                    renderConnection = RunService.RenderStepped:Connect(function()
+                        if fovenabled then
+                            workspace.CurrentCamera.FieldOfView = fovvalue
+                        end
+                    end)
+                end
+            else
+                workspace.CurrentCamera.FieldOfView = 70
+                if renderConnection then
+                    renderConnection:Disconnect()
+                    renderConnection = nil
+                end
+            end
+        end)
+    end,
+})
+
 
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("菜单", "wrench")
 
