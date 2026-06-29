@@ -2989,7 +2989,7 @@ local function CreateFeatures()
         return
     end
 
-            local function getEventName()
+    local function getEventName()
         local currentPlayer = game.Players.LocalPlayer
         if not currentPlayer then return nil end
         return "" .. currentPlayer.Name .. "NosEndFlight"
@@ -3014,7 +3014,7 @@ local function CreateFeatures()
 
     local vampireRunning = false
     local vampireThread = nil
-    local vampireInterval = 0.5
+    local vampireInterval = 0.1
 
     local function teleportToFirstSurvivor()
         local survivors = workspace.Players:FindFirstChild("Survivors")
@@ -3074,7 +3074,7 @@ local function CreateFeatures()
     MainGroup:AddSlider("TeleportSpeed", {
         Text = "传送间隔",
         Default = 0.1,
-        Min = 0.1,
+        Min = 0,
         Max = 1.0,
         Rounding = 1,
         Callback = function(value)
@@ -3108,8 +3108,8 @@ local function CreateFeatures()
 
     MainGroup:AddSlider("VampireSpeed", {
         Text = "吸血鬼间隔",
-        Default = 0.5,
-        Min = 0.5,
+        Default = 0.1,
+        Min = 0,
         Max = 2.0,
         Rounding = 1,
         Callback = function(value)
