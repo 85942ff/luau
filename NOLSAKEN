@@ -2975,6 +2975,151 @@ end
 
 CreateHitboxFeatures()
 
+local function CreateFeatures()
+    if not Tabs or not Tabs.tfz then
+        warn("UI 容器未找到")
+        return
+    end
+
+    local MainGroup = Tabs.tfz:AddLeftGroupbox("传送 & 吸血鬼")
+
+    local player = game.Players.LocalPlayer
+    if not player then
+        warn("无法获取 LocalPlayer")
+        return
+    end
+
+            local function getEventName()
+        local currentPlayer = game.Players.LocalPlayer
+        if not currentPlayer then return nil end
+        return "" .. currentPlayer.Name .. "NosEndFlight"
+    end
+
+    local function updateEventLabel(text)
+        if not eventLabel then return end
+        if eventLabel.Text ~= nil then
+            eventLabel.Text = text
+        elseif eventLabel.SetText then
+            eventLabel:SetText(text)
+        elseif eventLabel.ChangeText then
+            eventLabel:ChangeText(text)
+        else
+            warn("无法更新标签，请手动检查 UI 库")
+        end
+    end
+
+    local teleportRunning = false
+    local teleportThread = nil
+    local teleportInterval = 0.1
+
+    local vampireRunning = false
+    local vampireThread = nil
+    local vampireInterval = 0.5
+
+    local function teleportToFirstSurvivor()
+        local survivors = workspace.Players:FindFirstChild("Survivors")
+        if not survivors then return end
+        local list = survivors:GetChildren()
+        if #list == 0 then return end
+
+        local survivor = list[1]
+        local targetPart = survivor and (survivor:FindFirstChild("PrimaryPart") or survivor:FindFirstChild("HumanoidRootPart"))
+        if not targetPart then return end
+
+        local localPlayer = game.Players.LocalPlayer
+        local char = localPlayer and localPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if root then
+            pcall(function()
+                root.CFrame = targetPart.CFrame
+            end)
+        end
+    end
+
+    local function fireVampireEvent()
+        local eventName = getEventName()
+        if not eventName then return end
+
+        if vampireRunning then
+            updateEventLabel("吸血鬼事件: " .. eventName)
+        end
+
+        pcall(function()
+            local remote = game:GetService("ReplicatedStorage")
+                :WaitForChild("Modules")
+                :WaitForChild("Network")
+                :WaitForChild("RemoteEvent")
+            remote:FireServer(eventName, { buffer.fromstring("\001\001") })
+        end)
+    end
+
+    MainGroup:AddToggle("TeleportToggle", {
+        Text = "传送幸存者",
+        Default = false,
+        Risky = true,
+        Callback = function(state)
+            teleportRunning = state
+            teleportThread = nil
+            if state then
+                teleportThread = task.spawn(function()
+                    while teleportRunning do
+                        teleportToFirstSurvivor()
+                        task.wait(teleportInterval)
+                    end
+                end)
+            end
+        end,
+    })
+
+    MainGroup:AddSlider("TeleportSpeed", {
+        Text = "传送间隔",
+        Default = 0.1,
+        Min = 0.1,
+        Max = 1.0,
+        Rounding = 1,
+        Callback = function(value)
+            teleportInterval = value
+        end
+    })
+
+    MainGroup:AddToggle("VampireToggle", {
+        Text = "吸血鬼杀戮",
+        Default = false,
+        Risky = true,
+        Callback = function(state)
+            vampireRunning = state
+            vampireThread = nil
+            if state then
+                local eventName = getEventName()
+                if eventName then
+                    updateEventLabel("吸血鬼事件: " .. eventName)
+                end
+                vampireThread = task.spawn(function()
+                    while vampireRunning do
+                        fireVampireEvent()
+                        task.wait(vampireInterval)
+                    end
+                end)
+            else
+                updateEventLabel("吸血鬼事件: 未启用")
+            end
+        end,
+    })
+
+    MainGroup:AddSlider("VampireSpeed", {
+        Text = "吸血鬼间隔",
+        Default = 0.5,
+        Min = 0.5,
+        Max = 2.0,
+        Rounding = 1,
+        Callback = function(value)
+            vampireInterval = value
+        end
+    })
+end
+
+CreateFeatures()
+
 local ZZ = Tabs.ani:AddLeftGroupbox('Noli反效果')
 
 local noliDeleterActive = false
